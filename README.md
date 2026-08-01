@@ -299,21 +299,6 @@ My_IDS/
 └── setup.bat                    # Environment setup script (Windows)
 ```
 
----
-
-## 🛣️ Roadmap
-
-- [x] **Stage 1**: Raw Packet Capture & Model Normalization
-- [x] **Stage 2**: Hot-Reloadable Signature Rule Engine
-- [x] **Stage 3**: Flow Tracking & Anomaly Detectors (Port Scan / SYN Flood)
-- [x] **Stage 4**: Real-Time Rich Terminal Dashboard
-- [x] **Stage 5**: Deep Packet Inspection (DPI) & Expanded Flow Detectors
-- [ ] **Stage 6**: SQLite / PostgreSQL Persistence Layer for Historical Analysis
-- [ ] **Stage 7**: Modern Web Dashboard (FastAPI Backend + React UI)
-- [ ] **Stage 8**: Machine Learning Anomaly Detection (Isolation Forest / Autoencoders)
-
----
-
 ## 📜 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
