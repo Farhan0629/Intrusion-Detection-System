@@ -1,0 +1,171 @@
+# Default rule set — Stage 2 (per-packet matching only; no thresholds/state yet)
+# Stage 5 additions: payload-signature rules (lines ~75+) for HTTP/Shellshock
+# /scanner-UA detection — each rule matches a literal pattern in the simulator
+# so a panel row tells you exactly which attack was attempted.
+# Edit this file while the IDS is running — it hot-reloads automatically.
+
+rule SSH_Connection_Attempt
+    protocol tcp
+    dst_port 22
+    flags SYN
+    severity medium
+    message "Inbound SSH connection attempt"
+end
+
+rule Telnet_Connection_Attempt
+    protocol tcp
+    dst_port 23
+    flags SYN
+    severity high
+    message "Inbound Telnet connection attempt (insecure protocol)"
+end
+
+rule FTP_Connection_Attempt
+    protocol tcp
+    dst_port 21
+    flags SYN
+    severity low
+    message "Inbound FTP connection attempt"
+end
+
+rule RDP_Connection_Attempt
+    protocol tcp
+    dst_port 3389
+    flags SYN
+    severity medium
+    message "Inbound RDP connection attempt"
+end
+
+rule SMB_Connection_Attempt
+    protocol tcp
+    dst_port 445
+    flags SYN
+    severity medium
+    message "Inbound SMB connection attempt"
+end
+
+rule NULL_Scan_Detected
+    protocol tcp
+    flags none
+    severity high
+    message "TCP packet with no flags set — possible NULL scan"
+end
+
+rule FIN_Scan_Detected
+    protocol tcp
+    flags FIN
+    severity high
+    message "Lone FIN flag — possible stealth FIN scan"
+end
+
+rule ICMP_Echo_Request
+    protocol icmp
+    severity info
+    message "ICMP echo request (ping) observed"
+end
+
+rule ARP_Request_Observed
+    protocol arp
+    severity info
+    message "ARP request observed on the network"
+end
+
+rule DNS_Query_Traffic
+    protocol udp
+    dst_port 53
+    severity info
+    message "DNS query traffic observed"
+end
+
+# ---------------------------------------------------------------------------
+# Stage 5: payload-signature rules (each matches one literal from the IDS
+# attack simulator's HTTP_ATTACK_PATHS / NASTY_USER_AGENTS lists so the
+# dashboard row tells you exactly which attack was tried).
+#
+# These are matched against the first 4 KiB of TCP payload bytes; the
+# regex is compiled once at load time and reused.
+# ---------------------------------------------------------------------------
+
+rule HTTP_SQLi_Classic
+    protocol tcp
+    payload_regex "1' OR '1'='1"
+    severity high
+    message "Classic SQLi probe in URL parameter"
+end
+
+rule HTTP_SQLi_Union
+    protocol tcp
+    payload_regex "UNION SELECT"
+    severity high
+    message "SQL injection UNION-based probe"
+end
+
+rule HTTP_XSS_Script
+    protocol tcp
+    payload_regex "<script>alert\("
+    severity high
+    message "Reflected XSS via <script> tag"
+end
+
+rule HTTP_PathTraversal_DotDot
+    protocol tcp
+    payload_regex "/\.\./\.\./\.\./\.\./etc/passwd"
+    severity high
+    message "Path traversal attempt for /etc/passwd"
+end
+
+rule HTTP_PathTraversal_Encoded
+    protocol tcp
+    payload_regex "(?i)\.%2f\.\.%2f|%2e%2e%2f"
+    severity high
+    message "URL-encoded path traversal attempt"
+end
+
+rule HTTP_CmdInjection_CatPasswd
+    protocol tcp
+    payload_regex ";cat /etc/passwd|cmd=;cat"
+    severity high
+    message "OS command injection in CGI parameter"
+end
+
+rule HTTP_RFI
+    protocol tcp
+    payload_regex "page=http://"
+    severity high
+    message "Remote File Inclusion attempt"
+end
+
+rule HTTP_CommandExec
+    protocol tcp
+    payload_regex "exec=/bin/sh|exec=/bin/bash"
+    severity high
+    message "Direct command execution parameter"
+end
+
+rule HTTP_Webshell_Probe
+    protocol tcp
+    payload_regex "/shell\.php|/c99\.php|/r57\.php"
+    severity high
+    message "Webshell probe (shell.php / c99.php / r57.php)"
+end
+
+rule HTTP_Sensitive_GitConfig
+    protocol tcp
+    payload_regex "/\.git/config"
+    severity high
+    message "Sensitive file probe (.git/config)"
+end
+
+rule HTTP_Shellshock_UA
+    protocol tcp
+    payload_regex "\(\)\s*\{\s*:;\}\s*;\s*/bin/(?:ba)?sh"
+    severity critical
+    message "Shellshock exploit attempt in User-Agent"
+end
+
+rule HTTP_ScannerUA
+    protocol tcp
+    payload_regex "(?i)sqlmap/|nikto/\d|nmap scripting engine"
+    severity medium
+    message "Known security scanner User-Agent (sqlmap/Nikto/Nmap)"
+end
